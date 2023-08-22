@@ -1,5 +1,7 @@
 package com.jiring.jiringexam.dto;
 
+import com.jiring.jiringexam.entity.User;
+import com.jiring.jiringexam.enums.UserPriority;
 import lombok.Getter;
 import lombok.Setter;
 

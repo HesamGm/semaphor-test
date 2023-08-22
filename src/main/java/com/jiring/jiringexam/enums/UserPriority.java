@@ -1,4 +1,4 @@
-package com.jiring.jiringexam.dto;
+package com.jiring.jiringexam.enums;
 
 public enum UserPriority {
     LOW, HIGH

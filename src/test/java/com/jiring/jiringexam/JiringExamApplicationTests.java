@@ -1,8 +1,8 @@
 package com.jiring.jiringexam;
 
-import com.jiring.jiringexam.conroller.UserController;
+import com.jiring.jiringexam.controller.UserController;
 import com.jiring.jiringexam.dto.UserInput;
-import com.jiring.jiringexam.dto.UserPriority;
+import com.jiring.jiringexam.enums.UserPriority;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

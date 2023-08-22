@@ -1,6 +1,10 @@
 package com.jiring.jiringexam.service;
 
 import com.jiring.jiringexam.dto.*;
+import com.jiring.jiringexam.entity.SignInAttempt;
+import com.jiring.jiringexam.entity.User;
+import com.jiring.jiringexam.enums.SignInAttemptState;
+import com.jiring.jiringexam.enums.UserPriority;
 import com.jiring.jiringexam.repository.SignInAttemptRepository;
 import com.jiring.jiringexam.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +32,6 @@ public class UserServiceImpl implements UserService {
                            SignInAttemptRepository signInAttemptRepository) {
         this.userRepository = userRepository;
         this.signInAttemptRepository = signInAttemptRepository;
-//        this.taskExecutor = taskExecutor;
     }
 
     @Override

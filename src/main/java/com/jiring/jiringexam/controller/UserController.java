@@ -1,7 +1,7 @@
-package com.jiring.jiringexam.conroller;
+package com.jiring.jiringexam.controller;
 
-import com.jiring.jiringexam.dto.SignInAttempt;
-import com.jiring.jiringexam.dto.User;
+import com.jiring.jiringexam.entity.SignInAttempt;
+import com.jiring.jiringexam.entity.User;
 import com.jiring.jiringexam.dto.UserInput;
 import com.jiring.jiringexam.dto.UserSignInInput;
 import com.jiring.jiringexam.service.UserService;

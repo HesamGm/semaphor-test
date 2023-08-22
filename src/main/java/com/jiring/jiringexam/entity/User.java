@@ -1,5 +1,6 @@
-package com.jiring.jiringexam.dto;
+package com.jiring.jiringexam.entity;
 
+import com.jiring.jiringexam.enums.UserPriority;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
