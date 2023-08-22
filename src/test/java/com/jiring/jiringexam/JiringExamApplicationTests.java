@@ -97,7 +97,6 @@ class JiringExamApplicationTests {
 				userController.signUp(userInput); // Simulate mixed priority users
 				latch.countDown();
 			}).start();
-			System.out.println("test number " + i);
 		}
 
 		latch.await(); // Wait for all requests to complete

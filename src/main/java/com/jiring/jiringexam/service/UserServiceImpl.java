@@ -1,6 +1,7 @@
 package com.jiring.jiringexam.service;
 
-import com.jiring.jiringexam.dto.*;
+import com.jiring.jiringexam.dto.UserInput;
+import com.jiring.jiringexam.dto.UserSignInInput;
 import com.jiring.jiringexam.entity.SignInAttempt;
 import com.jiring.jiringexam.entity.User;
 import com.jiring.jiringexam.enums.SignInAttemptState;
@@ -37,15 +38,13 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void signUp(UserInput userInput) {
-        processWithSemaphore(userInput.getPriority(), () -> processSignUp(userInput));
-    }
-
-    private void processSignUp(UserInput userInput) {
-        User user = new User();
-        userInput.fillEntity(user);
-        simulateProcessingTime();
-        userRepository.save(user);
-        System.out.println(user.getName() + " * finished ********" + user.getCreationDate() + " * " + user.getPriority());
+        processWithSemaphore(userInput.getPriority(), () -> {
+            User user = new User();
+            userInput.fillEntity(user);
+            simulateProcessingTime();
+            userRepository.save(user);
+            System.out.println(user.getName() + " * finished ********" + user.getCreationDate() + " * " + user.getPriority());
+        });
     }
 
     @Override
@@ -53,16 +52,18 @@ public class UserServiceImpl implements UserService {
     public User signIn(UserSignInInput input) {
         Optional<User> userOptional = userRepository.findById(input.getId());
         if (userOptional.isPresent()) {
-            return processWithSemaphore(userOptional.get().getPriority(), () -> processSignIn(userOptional.get(), input.getPassword()));
+            User user = userOptional.get();
+            return processWithSemaphore(userOptional.get().getPriority(), () -> {
+                boolean signInSuccessful = Objects.equals(user.getPassword(), input.getPassword()) && !user.isBanned();
+                simulateProcessingTime();
+                logSignInAttempt(user.getId(), signInSuccessful ? SignInAttemptState.SUCCESSFUL : SignInAttemptState.FAILED);
+                if (signInSuccessful)
+                    return user;
+                else
+                    throw new RuntimeException("login failed");
+            });
         }
-        return null; // or throw system exception
-    }
-
-    private User processSignIn(User user, String password) {
-        boolean signInSuccessful = Objects.equals(user.getPassword(), password) && !user.isBanned();
-        simulateProcessingTime();
-        logSignInAttempt(user.getId(), signInSuccessful ? SignInAttemptState.SUCCESSFUL : SignInAttemptState.FAILED);
-        return signInSuccessful ? user : null; // or throw system exception
+        throw new RuntimeException("user not found");
     }
 
     private void logSignInAttempt(Long userId, SignInAttemptState state) {
@@ -86,8 +87,8 @@ public class UserServiceImpl implements UserService {
             one.get().setBanned(true);
             this.userRepository.save(one.get());
         }
-//        else
-//            throw new SystemException("user not found");
+        else
+            throw new RuntimeException("user not found");
     }
 
     @Override
@@ -98,13 +99,9 @@ public class UserServiceImpl implements UserService {
             one.get().setBanned(false);
             this.userRepository.save(one.get());
         }
-//        else
-//            throw new SystemException("user not found");
+        else
+            throw new RuntimeException("user not found");
     }
-
-    /*
-     * Remember to handle exceptions,
-     *  perform proper logging */
 
     /* ************************************************************************ */
 
