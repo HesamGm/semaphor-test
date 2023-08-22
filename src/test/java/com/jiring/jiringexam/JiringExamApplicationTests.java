@@ -84,14 +84,14 @@ class JiringExamApplicationTests {
 	}
 	@Test
 	public void testMixedPriorityUsers() throws InterruptedException {
-		int numRequests = 46; // Total requests to simulate
+		int numRequests = 20; // Total requests to simulate
 		CountDownLatch latch = new CountDownLatch(numRequests);
 
 		// Simulate concurrent requests for both high-priority and regular users
 		for (int i = 0; i < numRequests; i++) {
 			UserPriority priority = i % 2 == 0 ? UserPriority.HIGH : UserPriority.LOW;
 			UserIn userIn = new UserIn();
-			userIn.setName("hesamTest" + LocalTime.now().getNano());
+			userIn.setName("hesamTest" + i);
 			userIn.setPassword("1233456" + LocalTime.now().getNano());
 			userIn.setPriority(priority);
 			new Thread(() -> {

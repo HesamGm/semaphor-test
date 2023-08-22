@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
+import java.util.function.Supplier;
 
 @Transactional(readOnly = true)
 @Service
@@ -33,68 +34,32 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void signUp(UserIn userIn) {
-        if (userIn.getPriority() == UserPriority.LOW) {
-            try {
-                System.out.println(userIn.getName() + " * start semaphore ********" + userIn.getPriority());
-                semaphore.acquire(); // Acquire a permit
-                this.processSignUp(userIn);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            } finally {
-                semaphore.release(); // Release the permit after processing
-            }
-        } else {
-            System.out.println(userIn.getName() + " * start without semaphore ********" + userIn.getPriority());
-            this.processSignUp(userIn);
-        }
+        processWithSemaphore(userIn.getPriority(), () -> processSignUp(userIn));
     }
 
     private void processSignUp(UserIn userIn) {
         User user = new User();
         userIn.fillEntity(user);
-        // Simulate processing time
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        this.userRepository.save(user);
+        simulateProcessingTime();
+        userRepository.save(user);
         System.out.println(user.getName() + " * finished ********" + user.getCreationDate() + " * " + user.getPriority());
     }
 
     @Override
     @Transactional
     public User signIn(Long userId, String password) {
-        Optional<User> one = this.userRepository.findById(userId);
-        if (one.isPresent()) {
-            if (one.get().getPriority() == UserPriority.LOW) {
-                try {
-                    semaphore.acquire(); // Acquire a permit
-                    return this.processSignIn(one.get(), password);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                } finally {
-                    semaphore.release(); // Release the permit after processing
-                }
-            } else
-                this.processSignIn(one.get(), password);
-        } else
-            return null; //throw system exception
-        return one.get();
+        Optional<User> userOptional = userRepository.findById(userId);
+        if (userOptional.isPresent()) {
+            return processWithSemaphore(userOptional.get().getPriority(), () -> processSignIn(userOptional.get(), password));
+        }
+        return null; // or throw system exception
     }
 
     private User processSignIn(User user, String password) {
         boolean signInSuccessful = Objects.equals(user.getPassword(), password) && !user.isBanned();
-        // Perform sign-in logic
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        // Log the sign-in attempt
+        simulateProcessingTime();
         logSignInAttempt(user.getId(), signInSuccessful ? SignInAttemptState.SUCCESSFUL : SignInAttemptState.FAILED);
-        // Return user on successful sign-in
-        return signInSuccessful ? user : null; //throw system exception
+        return signInSuccessful ? user : null; // or throw system exception
     }
 
     private void logSignInAttempt(Long userId, SignInAttemptState state) {
@@ -137,4 +102,46 @@ public class UserServiceImpl implements UserService {
     /*
      * Remember to handle exceptions,
      *  perform proper logging */
+
+    /* ************************************************************************ */
+
+    private <T> T processWithSemaphore(UserPriority priority, Supplier<T> action) {
+        if (priority == UserPriority.LOW) {
+            try {
+                semaphore.acquire();
+                return action.get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            } finally {
+                semaphore.release();
+            }
+        } else {
+            return action.get();
+        }
+    }
+
+    private void processWithSemaphore(UserPriority priority, Runnable action) {
+        if (priority == UserPriority.LOW) {
+            try {
+                semaphore.acquire();
+                action.run();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            } finally {
+                semaphore.release();
+            }
+        } else {
+            action.run();
+        }
+    }
+
+    private void simulateProcessingTime() {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
