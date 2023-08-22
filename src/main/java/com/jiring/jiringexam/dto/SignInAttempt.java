@@ -1,8 +1,6 @@
 package com.jiring.jiringexam.dto;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,8 +10,11 @@ import java.util.Date;
 @Setter
 @Entity
 @Table
+@SequenceGenerator(sequenceName = "SIGN_IN_ATTEMPT_SEQ", name = "SignInAttempt_Sequence",
+        schema = "jiring", allocationSize = 1, initialValue = 3000)
 public class SignInAttempt {
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SignInAttempt_Sequence")
     private Long id;
     private Long userId;
     private Date attemptDate;

@@ -40,13 +40,13 @@ public class UserController {
     }
 
     @PatchMapping("/ban")
-    public ResponseEntity<Void> banUser(@RequestParam String userId) {
+    public ResponseEntity<Void> banUser(@RequestParam Long userId) {
         this.userService.banUser(userId);
         return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/unban")
-    public ResponseEntity<Void> unbanUser(@RequestParam String userId) {
+    public ResponseEntity<Void> unbanUser(@RequestParam Long userId) {
         this.userService.unbanUser(userId);
         return ResponseEntity.ok().build();
     }

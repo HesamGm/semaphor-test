@@ -10,6 +10,6 @@ public interface UserService {
     void signUp(UserIn user);
     User signIn(Long userId, String password);
     List<SignInAttempt> getLatestSignInAttempts();
-    void banUser(String userId);
-    void unbanUser(String userId);
+    void banUser(Long userId);
+    void unbanUser(Long userId);
 }

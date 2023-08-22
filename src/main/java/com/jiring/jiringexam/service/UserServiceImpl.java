@@ -4,14 +4,15 @@ import com.jiring.jiringexam.dto.*;
 import com.jiring.jiringexam.repository.SignInAttemptRepository;
 import com.jiring.jiringexam.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Example;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Semaphore;
 
 @Transactional(readOnly = true)
 @Service
@@ -19,6 +20,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final SignInAttemptRepository signInAttemptRepository;
+    private final Semaphore semaphore = new Semaphore(3, true);
 
     @Autowired
     public UserServiceImpl(UserRepository userRepository,
@@ -31,92 +33,108 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void signUp(UserIn userIn) {
-        // Handle priorities and queueing
-        // Implement user signup logic here
-        if (userIn.getPriority().equals(UserPriority.HIGH)) {
-            this.processHighPriorityRequest(userIn);
+        if (userIn.getPriority() == UserPriority.LOW) {
+            try {
+                System.out.println(userIn.getName() + " * start semaphore ********" + userIn.getPriority());
+                semaphore.acquire(); // Acquire a permit
+                this.processSignUp(userIn);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally {
+                semaphore.release(); // Release the permit after processing
+            }
         } else {
-            this.processRegularRequest(userIn);
+            System.out.println(userIn.getName() + " * start without semaphore ********" + userIn.getPriority());
+            this.processSignUp(userIn);
         }
     }
 
-    @Async("highPriorityTaskExecutor")
-    public void processHighPriorityRequest(UserIn userIn) {
+    private void processSignUp(UserIn userIn) {
         User user = new User();
         userIn.fillEntity(user);
-//        try {
-//            taskExecutor.wait(5000);
-//        } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
-//        }
+        // Simulate processing time
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         this.userRepository.save(user);
-    }
-
-    @Async("regularTaskExecutor")
-    public void processRegularRequest(UserIn userIn) {
-        User user = new User();
-        userIn.fillEntity(user);
-//        try {
-//            taskExecutor.wait(5000);
-//        } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
-//        }
-        this.userRepository.save(user);
+        System.out.println(user.getName() + " * finished ********" + user.getCreationDate() + " * " + user.getPriority());
     }
 
     @Override
-    @Async("taskExecutor")
+    @Transactional
     public User signIn(Long userId, String password) {
-        // Implement user sign-in logic here
-        // Handle priorities and queueing
-        // Log sign-in attempts and save them in the repository
-        // Perform sign-in logic
-        boolean signInSuccessful = true;
-        User user = new User();
-        user.setId(userId);
-        user.setPassword(password);
-        Optional<User> one = this.userRepository.findOne(Example.of(user));
-        if (one.isEmpty() || one.get().isBanned())
-            signInSuccessful = false;
-        user = one.get();
-        // Log the sign-in attempt
-        logSignInAttempt(userId, signInSuccessful ? SignInAttemptState.SUCCESSFUL : SignInAttemptState.FAILED);
-        // Return user on successful sign-in
-        return user;
+        Optional<User> one = this.userRepository.findById(userId);
+        if (one.isPresent()) {
+            if (one.get().getPriority() == UserPriority.LOW) {
+                try {
+                    semaphore.acquire(); // Acquire a permit
+                    return this.processSignIn(one.get(), password);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    semaphore.release(); // Release the permit after processing
+                }
+            } else
+                this.processSignIn(one.get(), password);
+        } else
+            return null; //throw system exception
+        return one.get();
     }
 
-    @Transactional
-    public void logSignInAttempt(Long userId, SignInAttemptState state) {
+    private User processSignIn(User user, String password) {
+        boolean signInSuccessful = Objects.equals(user.getPassword(), password) && !user.isBanned();
+        // Perform sign-in logic
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        // Log the sign-in attempt
+        logSignInAttempt(user.getId(), signInSuccessful ? SignInAttemptState.SUCCESSFUL : SignInAttemptState.FAILED);
+        // Return user on successful sign-in
+        return signInSuccessful ? user : null; //throw system exception
+    }
+
+    private void logSignInAttempt(Long userId, SignInAttemptState state) {
         SignInAttempt attempt = new SignInAttempt();
         attempt.setUserId(userId);
         attempt.setAttemptDate(new Date());
         attempt.setState(state);
-        this.signInAttemptRepository.save(attempt);
+        this.signInAttemptRepository.save(attempt); //change this to save on elasticsearch
     }
 
     @Override
     public List<SignInAttempt> getLatestSignInAttempts() {
-        // Implement logic to retrieve latest sign-in attempts
-        // Return a list of latest sign-in attempts
-        return this.signInAttemptRepository.findAll();
+        return this.signInAttemptRepository.findAll(Sort.by("attemptDate"));
     }
 
     @Override
     @Transactional
-    public void banUser(String userId) {
-        // Implement logic to ban a user
+    public void banUser(Long userId) {
+        Optional<User> one = this.userRepository.findById(userId);
+        if (one.isPresent()) {
+            one.get().setBanned(true);
+            this.userRepository.save(one.get());
+        }
+//        else
+//            throw new SystemException("user not found");
     }
 
     @Override
     @Transactional
-    public void unbanUser(String userId) {
-        // Implement logic to unban a user
+    public void unbanUser(Long userId) {
+        Optional<User> one = this.userRepository.findById(userId);
+        if (one.isPresent()) {
+            one.get().setBanned(false);
+            this.userRepository.save(one.get());
+        }
+//        else
+//            throw new SystemException("user not found");
     }
 
     /*
-     * Remember to implement the logic for banning and unbanning users,
-     *  handling sign-in attempts and user states, as well as handling concurrent requests
-     *  and queueing in your service implementations. Additionally, handle exceptions,
-     *  perform proper logging,
-     * and ensure secure password handling for a production-ready application.*/
+     * Remember to handle exceptions,
+     *  perform proper logging */
 }
