@@ -2,7 +2,8 @@ package com.jiring.jiringexam.conroller;
 
 import com.jiring.jiringexam.dto.SignInAttempt;
 import com.jiring.jiringexam.dto.User;
-import com.jiring.jiringexam.dto.UserIn;
+import com.jiring.jiringexam.dto.UserInput;
+import com.jiring.jiringexam.dto.UserSignInInput;
 import com.jiring.jiringexam.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,15 +23,15 @@ public class UserController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<Void> signUp(@RequestBody UserIn userIn) {
-        userService.signUp(userIn);
+    public ResponseEntity<Void> signUp(@RequestBody UserInput userInput) {
+        userService.signUp(userInput);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<User> signIn(@RequestParam Long userId, @RequestParam String password) {
+    public ResponseEntity<User> signIn(@RequestBody UserSignInInput input) {
         // Handle user sign-in request
-        return ResponseEntity.ok(userService.signIn(userId, password));
+        return ResponseEntity.ok(userService.signIn(input));
     }
 
     @GetMapping("/signin-attempts")
@@ -39,14 +40,14 @@ public class UserController {
         return ResponseEntity.ok(latestAttempts);
     }
 
-    @PatchMapping("/ban")
-    public ResponseEntity<Void> banUser(@RequestParam Long userId) {
+    @PatchMapping("/{id}/ban")
+    public ResponseEntity<Void> banUser(@PathVariable("id") Long userId) {
         this.userService.banUser(userId);
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/unban")
-    public ResponseEntity<Void> unbanUser(@RequestParam Long userId) {
+    @PatchMapping("/{id}/unban")
+    public ResponseEntity<Void> unbanUser(@PathVariable("id") Long userId) {
         this.userService.unbanUser(userId);
         return ResponseEntity.ok().build();
     }

@@ -1,7 +1,7 @@
 package com.jiring.jiringexam;
 
 import com.jiring.jiringexam.conroller.UserController;
-import com.jiring.jiringexam.dto.UserIn;
+import com.jiring.jiringexam.dto.UserInput;
 import com.jiring.jiringexam.dto.UserPriority;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.sql.Time;
 import java.time.LocalTime;
 import java.util.concurrent.CountDownLatch;
 
@@ -30,11 +29,11 @@ class JiringExamApplicationTests {
 		// Simulate concurrent requests
 		for (int i = 0; i < numRequests; i++) {
 			new Thread(() -> {
-				UserIn userIn = new UserIn();
-				userIn.setName("hesamTest" + LocalTime.now().getNano());
-				userIn.setPassword(String.valueOf(LocalTime.now().getNano()));
-				userIn.setPriority(UserPriority.LOW);
-				userController.signUp(userIn); // Simulate regular users
+				UserInput userInput = new UserInput();
+				userInput.setName("hesamTest" + LocalTime.now().getNano());
+				userInput.setPassword(String.valueOf(LocalTime.now().getNano()));
+				userInput.setPriority(UserPriority.LOW);
+				userController.signUp(userInput); // Simulate regular users
 				latch.countDown();
 			}).start();
 		}
@@ -49,11 +48,11 @@ class JiringExamApplicationTests {
 		// Simulate concurrent requests for high-priority users
 		for (int i = 0; i < numRequests; i++) {
 			new Thread(() -> {
-				UserIn userIn = new UserIn();
-				userIn.setName("hesamTest" + LocalTime.now().getNano());
-				userIn.setPassword("1233456" + LocalTime.now().getNano());
-				userIn.setPriority(UserPriority.HIGH);
-				userController.signUp(userIn); // Simulate high-priority users
+				UserInput userInput = new UserInput();
+				userInput.setName("hesamTest" + LocalTime.now().getNano());
+				userInput.setPassword("1233456" + LocalTime.now().getNano());
+				userInput.setPriority(UserPriority.HIGH);
+				userController.signUp(userInput); // Simulate high-priority users
 				latch.countDown();
 			}).start();
 		}
@@ -70,11 +69,11 @@ class JiringExamApplicationTests {
 		for (int i = 0; i < numRequests; i++) {
 			int finalI = i;
 			new Thread(() -> {
-				UserIn userIn = new UserIn();
-				userIn.setName("hesamTest" + finalI);
-				userIn.setPassword("1233456" + LocalTime.now().getSecond());
-				userIn.setPriority(UserPriority.LOW);
-				userController.signUp(userIn); // Simulate regular-priority users
+				UserInput userInput = new UserInput();
+				userInput.setName("hesamTest" + finalI);
+				userInput.setPassword("1233456" + LocalTime.now().getSecond());
+				userInput.setPriority(UserPriority.LOW);
+				userController.signUp(userInput); // Simulate regular-priority users
 				latch.countDown();
 			}).start();
 		}
@@ -90,12 +89,12 @@ class JiringExamApplicationTests {
 		// Simulate concurrent requests for both high-priority and regular users
 		for (int i = 0; i < numRequests; i++) {
 			UserPriority priority = i % 2 == 0 ? UserPriority.HIGH : UserPriority.LOW;
-			UserIn userIn = new UserIn();
-			userIn.setName("hesamTest" + i);
-			userIn.setPassword("1233456" + LocalTime.now().getNano());
-			userIn.setPriority(priority);
+			UserInput userInput = new UserInput();
+			userInput.setName("hesamTest" + i);
+			userInput.setPassword("1233456" + LocalTime.now().getNano());
+			userInput.setPriority(priority);
 			new Thread(() -> {
-				userController.signUp(userIn); // Simulate mixed priority users
+				userController.signUp(userInput); // Simulate mixed priority users
 				latch.countDown();
 			}).start();
 			System.out.println("test number " + i);

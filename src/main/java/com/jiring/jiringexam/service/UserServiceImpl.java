@@ -33,13 +33,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void signUp(UserIn userIn) {
-        processWithSemaphore(userIn.getPriority(), () -> processSignUp(userIn));
+    public void signUp(UserInput userInput) {
+        processWithSemaphore(userInput.getPriority(), () -> processSignUp(userInput));
     }
 
-    private void processSignUp(UserIn userIn) {
+    private void processSignUp(UserInput userInput) {
         User user = new User();
-        userIn.fillEntity(user);
+        userInput.fillEntity(user);
         simulateProcessingTime();
         userRepository.save(user);
         System.out.println(user.getName() + " * finished ********" + user.getCreationDate() + " * " + user.getPriority());
@@ -47,10 +47,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public User signIn(Long userId, String password) {
-        Optional<User> userOptional = userRepository.findById(userId);
+    public User signIn(UserSignInInput input) {
+        Optional<User> userOptional = userRepository.findById(input.getId());
         if (userOptional.isPresent()) {
-            return processWithSemaphore(userOptional.get().getPriority(), () -> processSignIn(userOptional.get(), password));
+            return processWithSemaphore(userOptional.get().getPriority(), () -> processSignIn(userOptional.get(), input.getPassword()));
         }
         return null; // or throw system exception
     }
