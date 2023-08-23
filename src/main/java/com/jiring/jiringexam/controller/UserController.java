@@ -6,6 +6,7 @@ import com.jiring.jiringexam.dto.UserInput;
 import com.jiring.jiringexam.dto.UserSignInInput;
 import com.jiring.jiringexam.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,8 +36,8 @@ public class UserController {
     }
 
     @GetMapping("/signin-attempts")
-    public ResponseEntity<List<SignInAttempt>> getLatestSignInAttempts() {
-        List<SignInAttempt> latestAttempts = userService.getLatestSignInAttempts();
+    public ResponseEntity<Page<SignInAttempt>> getLatestSignInAttempts() {
+        Page<SignInAttempt> latestAttempts = userService.getLatestSignInAttempts();
         return ResponseEntity.ok(latestAttempts);
     }
 

@@ -8,10 +8,13 @@ import org.springframework.data.elasticsearch.client.elc.ElasticsearchConfigurat
 @Configuration
 public class ElasticsearchConfig extends ElasticsearchConfiguration {
 
-    @Bean
+    @Bean(name = {"elasticsearchClientConfiguration"})
+    @Override
     public ClientConfiguration clientConfiguration() {
         return ClientConfiguration.builder()
-                .connectedTo("localhost:9200") // Adjust based on your Elasticsearch setup
+                .connectedTo("localhost:9200")
+                .withBasicAuth("elastic","elastic")
                 .build();
     }
+
 }

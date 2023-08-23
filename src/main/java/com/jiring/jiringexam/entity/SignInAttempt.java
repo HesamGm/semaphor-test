@@ -10,13 +10,10 @@ import java.util.Date;
 
 @Getter
 @Setter
-@Document(indexName = "signIn-attempt")
-@SequenceGenerator(sequenceName = "SIGN_IN_ATTEMPT_SEQ", name = "SignInAttempt_Sequence",
-        schema = "jiring", allocationSize = 1, initialValue = 3000)
+@Document(indexName = "sign-in-attempt")
 public class SignInAttempt {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SignInAttempt_Sequence")
-    private Long id;
+    private String id;
     private Long userId;
     private Date attemptDate;
     private SignInAttemptState state;

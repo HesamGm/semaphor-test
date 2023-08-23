@@ -6,15 +6,16 @@ import com.jiring.jiringexam.entity.SignInAttempt;
 import com.jiring.jiringexam.entity.User;
 import com.jiring.jiringexam.enums.SignInAttemptState;
 import com.jiring.jiringexam.enums.UserPriority;
+import com.jiring.jiringexam.general.error.SystemException;
 import com.jiring.jiringexam.repository.SignInAttemptRepository;
 import com.jiring.jiringexam.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
@@ -50,7 +51,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User signIn(UserSignInInput input) {
-        Optional<User> userOptional = userRepository.findById(input.getId());
+        Optional<User> userOptional = userRepository.findByName(input.getName());
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             return processWithSemaphore(userOptional.get().getPriority(), () -> {
@@ -60,10 +61,10 @@ public class UserServiceImpl implements UserService {
                 if (signInSuccessful)
                     return user;
                 else
-                    throw new RuntimeException("login failed");
+                    throw new SystemException("login failed");
             });
         }
-        throw new RuntimeException("user not found");
+        throw new SystemException("user not found");
     }
 
     private void logSignInAttempt(Long userId, SignInAttemptState state) {
@@ -75,8 +76,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<SignInAttempt> getLatestSignInAttempts() {
-        return this.signInAttemptRepository.findAll(Sort.by("attemptDate"));
+    public Page<SignInAttempt> getLatestSignInAttempts() {
+        return this.signInAttemptRepository.findAll(Pageable.ofSize(10));
     }
 
     @Override
@@ -88,7 +89,7 @@ public class UserServiceImpl implements UserService {
             this.userRepository.save(one.get());
         }
         else
-            throw new RuntimeException("user not found");
+            throw new SystemException("user not found");
     }
 
     @Override
@@ -100,7 +101,7 @@ public class UserServiceImpl implements UserService {
             this.userRepository.save(one.get());
         }
         else
-            throw new RuntimeException("user not found");
+            throw new SystemException("user not found");
     }
 
     /* ************************************************************************ */
