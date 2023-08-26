@@ -44,7 +44,6 @@ public class UserServiceImpl implements UserService {
             userInput.fillEntity(user);
             simulateProcessingTime();
             userRepository.save(user);
-            System.out.println(user.getName() + " * finished ********" + user.getCreationDate() + " * " + user.getPriority());
         });
     }
 
